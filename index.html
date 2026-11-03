@@ -236,6 +236,14 @@
     .workspace-container {
       flex: 1;
       display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .workspace-main {
+      flex: 1;
+      display: flex;
       overflow: hidden;
       position: relative;
     }
@@ -310,6 +318,20 @@
       overflow-y: auto;
       position: relative;
       background: #050505;
+      scrollbar-width: thin;
+      scrollbar-color: #444 #111;
+    }
+
+    .timeline-scroll-area::-webkit-scrollbar {
+      height: 10px;
+    }
+    .timeline-scroll-area::-webkit-scrollbar-track {
+      background: #111;
+      border-top: 1px solid var(--border-color);
+    }
+    .timeline-scroll-area::-webkit-scrollbar-thumb {
+      background: #444;
+      border-radius: 5px;
     }
 
     .timeline-wrapper {
@@ -365,7 +387,7 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 3px 4px;
+      padding: 4px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.5);
       touch-action: pan-y;
     }
@@ -375,52 +397,52 @@
       box-shadow: 0 0 10px rgba(57,255,20,0.4);
     }
 
-    .clip-header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 2px;
-    }
-
     .clip-title {
-      font-size: 9px;
+      font-size: 10px;
       font-weight: bold;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       color: #fff;
       pointer-events: none;
-      flex: 1;
-    }
-
-    .clip-move-btns {
-      display: flex;
-      gap: 1px;
-      z-index: 3;
-    }
-
-    .btn-clip-move {
-      background: rgba(0, 0, 0, 0.7);
-      border: 1px solid #666;
-      color: #fff;
-      width: 18px;
-      height: 18px;
-      border-radius: 3px;
-      font-size: 9px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-    }
-
-    .btn-clip-move:active {
-      background: #444;
     }
 
     .clip-canvas {
       width: 100%;
-      height: 32px;
+      height: 36px;
       pointer-events: none;
+    }
+
+    /* Нижнее мини-меню для управления перемещением клипа */
+    .clip-dock-menu {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #181818;
+      border: 1px solid #444;
+      border-radius: 20px;
+      padding: 4px 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 20;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.8);
+    }
+
+    .clip-dock-title {
+      font-size: 10px;
+      font-weight: bold;
+      color: var(--accent-lime);
+      max-width: 90px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .clip-dock-btns {
+      display: flex;
+      gap: 6px;
     }
 
     .playhead {
@@ -539,7 +561,7 @@
 
     .zoom-controls {
       position: absolute;
-      bottom: 16px;
+      bottom: 24px;
       right: 16px;
       display: flex;
       gap: 6px;
@@ -564,7 +586,7 @@
       </div>
     </div>
     <div class="top-actions">
-      <button class="btn" onclick="openActiveClipModal()" title="Настройки выбранного клипа">⚙️ Меню</button>
+      <button class="btn" onclick="openActiveClipModal()" title="Меню клипа">⚙️ Меню</button>
       <button class="btn btn-rec" id="recBtn" onclick="toggleRecord()">🔴 Запись</button>
       <button class="btn" onclick="document.getElementById('fileInput').click()">+ Файл</button>
       <button class="btn btn-lime" onclick="openExportModal()">💾</button>
@@ -601,15 +623,26 @@
   </div>
 
   <div class="workspace-container">
-    <div class="track-headers" id="trackHeaders"></div>
+    <div class="workspace-main">
+      <div class="track-headers" id="trackHeaders"></div>
 
-    <div class="timeline-scroll-area" id="timelineScroll">
-      <div class="timeline-wrapper" id="timelineWrapper">
-        <div class="timeline-ruler" id="ruler">
-          <div class="ruler-ticks" id="rulerTicks"></div>
+      <div class="timeline-scroll-area" id="timelineScroll">
+        <div class="timeline-wrapper" id="timelineWrapper">
+          <div class="timeline-ruler" id="ruler">
+            <div class="ruler-ticks" id="rulerTicks"></div>
+          </div>
+          <div id="tracksLanes"></div>
+          <div class="playhead" id="playhead" style="left: 0px;"></div>
         </div>
-        <div id="tracksLanes"></div>
-        <div class="playhead" id="playhead" style="left: 0px;"></div>
+      </div>
+    </div>
+
+    <!-- Всплывающая плашка управления при выборе песню -->
+    <div class="clip-dock-menu" id="clipDockMenu" style="display: none;">
+      <span class="clip-dock-title" id="dockClipTitle">Песня</span>
+      <div class="clip-dock-btns">
+        <button class="btn" onclick="moveSelectedClipTrack(-1)">▲ Выше</button>
+        <button class="btn" onclick="moveSelectedClipTrack(1)">▼ Ниже</button>
       </div>
     </div>
 
@@ -884,15 +917,7 @@
         clipEl.dataset.clipId = clip.id;
 
         clipEl.innerHTML = `
-          <div class="clip-header-row">
-            <div class="clip-move-btns">
-              <button class="btn-clip-move" onclick="moveClipTrack(event, ${clip.id}, -1)" title="Выше">▲</button>
-            </div>
-            <div class="clip-title">${clip.name}</div>
-            <div class="clip-move-btns">
-              <button class="btn-clip-move" onclick="moveClipTrack(event, ${clip.id}, 1)" title="Ниже">▼</button>
-            </div>
-          </div>
+          <div class="clip-title">${clip.name}</div>
           <canvas class="clip-canvas"></canvas>
         `;
 
@@ -900,12 +925,30 @@
         lane.appendChild(clipEl);
         drawWaveform(clipEl.querySelector('canvas'), clip.audioBuffer);
       });
+
+      updateDockMenu();
       renderOverviewMarkers();
     }
 
-    function moveClipTrack(e, clipId, direction) {
-      e.stopPropagation();
-      const clip = clips.find(c => c.id === clipId);
+    function updateDockMenu() {
+      const dock = document.getElementById('clipDockMenu');
+      if (!selectedClipId) {
+        dock.style.display = 'none';
+        return;
+      }
+
+      const clip = clips.find(c => c.id === selectedClipId);
+      if (clip) {
+        document.getElementById('dockClipTitle').innerText = clip.name;
+        dock.style.display = 'flex';
+      } else {
+        dock.style.display = 'none';
+      }
+    }
+
+    function moveSelectedClipTrack(direction) {
+      if (!selectedClipId) return;
+      const clip = clips.find(c => c.id === selectedClipId);
       if (!clip) return;
 
       const trackIds = tracks.map(t => t.id);
@@ -914,7 +957,6 @@
 
       if (newIndex >= 0 && newIndex < trackIds.length) {
         clip.trackId = trackIds[newIndex];
-        selectedClipId = clip.id;
         renderClips();
         if (isPlaying) restartLiveAudio();
       }
@@ -927,7 +969,7 @@
       const amp = canvas.height / 2;
 
       canvas.width = canvas.clientWidth || 100;
-      canvas.height = canvas.clientHeight || 32;
+      canvas.height = canvas.clientHeight || 36;
 
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
@@ -947,8 +989,6 @@
       let startX, startLeft, isDragging = false;
 
       const onStart = (e) => {
-        if (e.target.closest('.clip-move-btns')) return;
-        
         const touch = e.touches ? e.touches[0] : e;
         startX = touch.clientX;
         startLeft = clip.startTime * pixelsPerSecond;
@@ -998,7 +1038,7 @@
     function openActiveClipModal() {
       if (!selectedClipId) {
         if (clips.length > 0) {
-          selectedClipId = clips[0].id; // берем первый попавшийся, если ничего не выбрано
+          selectedClipId = clips[0].id;
         } else {
           return alert('Нет доступных клипов на таймлайне!');
         }
@@ -1118,7 +1158,7 @@
           if (clip.fadeOut > 0) {
             const fadeOutStart = playEndTime - clip.fadeOut;
             gainNode.gain.setValueAtTime(clip.volume, Math.max(playStartTime, fadeOutStart));
-            gainNode.gain.linearRampToValueAtTime(0, playEndTime);
+            gainNode.gain.linearRampToValueAtTime(0, clip.startTime + clip.duration);
           }
 
           source.connect(gainNode);
