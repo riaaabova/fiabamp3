@@ -92,9 +92,9 @@
       background: #222;
       color: #fff;
       border: 1px solid #444;
-      padding: 6px 8px;
+      padding: 6px 10px;
       border-radius: 6px;
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 600;
       cursor: pointer;
       display: flex;
@@ -298,8 +298,8 @@
     }
 
     .btn-mini {
-      font-size: 9px;
-      padding: 2px 5px;
+      font-size: 10px;
+      padding: 4px 8px;
       border-radius: 4px;
       background: #222;
       border: 1px solid #333;
@@ -318,20 +318,7 @@
       overflow-y: auto;
       position: relative;
       background: #050505;
-      scrollbar-width: thin;
-      scrollbar-color: #444 #111;
-    }
-
-    .timeline-scroll-area::-webkit-scrollbar {
-      height: 10px;
-    }
-    .timeline-scroll-area::-webkit-scrollbar-track {
-      background: #111;
-      border-top: 1px solid var(--border-color);
-    }
-    .timeline-scroll-area::-webkit-scrollbar-thumb {
-      background: #444;
-      border-radius: 5px;
+      padding-bottom: 60px; /* Запас снизу, чтобы скроллбар браузера ничего не перекрывал */
     }
 
     .timeline-wrapper {
@@ -375,6 +362,7 @@
       background-size: 40px 100%;
     }
 
+    /* Клип и жесткое отключение стандартных тач-действий для плавной передвижки */
     .audio-clip {
       position: absolute;
       top: 6px;
@@ -389,12 +377,12 @@
       justify-content: space-between;
       padding: 4px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.5);
-      touch-action: pan-y;
+      touch-action: none;
     }
 
     .audio-clip.selected {
       border: 2px solid var(--accent-lime);
-      box-shadow: 0 0 10px rgba(57,255,20,0.4);
+      box-shadow: 0 0 12px rgba(57,255,20,0.5);
     }
 
     .clip-title {
@@ -413,28 +401,28 @@
       pointer-events: none;
     }
 
-    /* Нижнее мини-меню для управления перемещением клипа */
+    /* Всплывающая нижняя панель переключения дорожек - поднята выше */
     .clip-dock-menu {
       position: absolute;
-      bottom: 12px;
+      bottom: 30px;
       left: 50%;
       transform: translateX(-50%);
       background: #181818;
-      border: 1px solid #444;
+      border: 1px solid #555;
       border-radius: 20px;
-      padding: 4px 10px;
+      padding: 6px 14px;
       display: flex;
       align-items: center;
-      gap: 10px;
-      z-index: 20;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.8);
+      gap: 12px;
+      z-index: 50;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.9);
     }
 
     .clip-dock-title {
-      font-size: 10px;
+      font-size: 11px;
       font-weight: bold;
       color: var(--accent-lime);
-      max-width: 90px;
+      max-width: 100px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -442,7 +430,7 @@
 
     .clip-dock-btns {
       display: flex;
-      gap: 6px;
+      gap: 8px;
     }
 
     .playhead {
@@ -559,17 +547,19 @@
       border: 1px solid #662222;
     }
 
+    /* Кнопки масштабирования - подняты выше */
     .zoom-controls {
       position: absolute;
-      bottom: 24px;
-      right: 16px;
+      bottom: 30px;
+      right: 12px;
       display: flex;
       gap: 6px;
-      z-index: 8;
-      background: rgba(0,0,0,0.8);
-      padding: 4px;
+      z-index: 50;
+      background: rgba(0,0,0,0.85);
+      padding: 4px 6px;
       border-radius: 20px;
-      border: 1px solid #333;
+      border: 1px solid #444;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.8);
     }
 
     #fileInput { display: none; }
@@ -637,7 +627,7 @@
       </div>
     </div>
 
-    <!-- Всплывающая плашка управления при выборе песню -->
+    <!-- Поднятое нижнее мини-меню -->
     <div class="clip-dock-menu" id="clipDockMenu" style="display: none;">
       <span class="clip-dock-title" id="dockClipTitle">Песня</span>
       <div class="clip-dock-btns">
@@ -646,6 +636,7 @@
       </div>
     </div>
 
+    <!-- Поднятый зум -->
     <div class="zoom-controls">
       <button class="btn-mini" onclick="adjustZoom(1.25)">🔍 +</button>
       <button class="btn-mini" onclick="adjustZoom(0.8)">🔍 −</button>
@@ -985,30 +976,33 @@
       }
     }
 
+    /* Надежный универсальный Drag-&-Drop для мыши и тачскрина */
     function makeClipInteractive(el, clip) {
       let startX, startLeft, isDragging = false;
 
+      const getX = (e) => (e.touches && e.touches.length > 0) ? e.touches[0].clientX : e.clientX;
+
       const onStart = (e) => {
-        const touch = e.touches ? e.touches[0] : e;
-        startX = touch.clientX;
+        startX = getX(e);
         startLeft = clip.startTime * pixelsPerSecond;
         isDragging = false;
 
         selectedClipId = clip.id;
         renderClips();
 
-        document.addEventListener('mousemove', onMove);
-        document.addEventListener('mouseup', onEnd);
-        document.addEventListener('touchmove', onMove, { passive: true });
-        document.addEventListener('touchend', onEnd);
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onEnd);
+        window.addEventListener('touchmove', onMove, { passive: false });
+        window.addEventListener('touchend', onEnd);
       };
 
       const onMove = (e) => {
-        const touch = e.touches ? e.touches[0] : e;
-        const deltaX = touch.clientX - startX;
+        const currentX = getX(e);
+        const deltaX = currentX - startX;
 
-        if (Math.abs(deltaX) > 3) {
+        if (Math.abs(deltaX) > 2) {
           isDragging = true;
+          if (e.cancelable) e.preventDefault(); // глушим прокрутку страницы при перетаскивании
         }
 
         if (isDragging) {
@@ -1020,10 +1014,10 @@
       };
 
       const onEnd = () => {
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onEnd);
-        document.removeEventListener('touchmove', onMove);
-        document.removeEventListener('touchend', onEnd);
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onEnd);
+        window.removeEventListener('touchmove', onMove);
+        window.removeEventListener('touchend', onEnd);
 
         if (isDragging) {
           renderOverviewMarkers();
@@ -1032,7 +1026,7 @@
       };
 
       el.addEventListener('mousedown', onStart);
-      el.addEventListener('touchstart', onStart, { passive: true });
+      el.addEventListener('touchstart', onStart, { passive: false });
     }
 
     function openActiveClipModal() {
