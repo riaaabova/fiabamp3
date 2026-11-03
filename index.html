@@ -318,7 +318,8 @@
       overflow-y: auto;
       position: relative;
       background: #050505;
-      padding-bottom: 60px; /* Запас снизу, чтобы скроллбар браузера ничего не перекрывал */
+      padding-bottom: 80px;
+      touch-action: pan-x pan-y;
     }
 
     .timeline-wrapper {
@@ -362,15 +363,15 @@
       background-size: 40px 100%;
     }
 
-    /* Клип и жесткое отключение стандартных тач-действий для плавной передвижки */
+    /* Клип в стиле CapCut DAW */
     .audio-clip {
       position: absolute;
       top: 6px;
       height: 68px;
       background: var(--clip-bg);
       border: 1px solid var(--clip-border);
-      border-radius: 6px;
-      overflow: hidden;
+      border-radius: 8px;
+      overflow: visible;
       cursor: grab;
       display: flex;
       flex-direction: column;
@@ -378,11 +379,42 @@
       padding: 4px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.5);
       touch-action: none;
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+    }
+
+    .audio-clip.dragging {
+      transform: scale(1.02);
+      z-index: 50;
+      box-shadow: 0 8px 24px rgba(57, 255, 20, 0.4);
+      opacity: 0.95;
     }
 
     .audio-clip.selected {
       border: 2px solid var(--accent-lime);
       box-shadow: 0 0 12px rgba(57,255,20,0.5);
+    }
+
+    /* Подсказка точной позиции времени при drag & drop */
+    .clip-time-tooltip {
+      position: absolute;
+      top: -24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--accent-lime);
+      color: #000;
+      font-weight: bold;
+      font-size: 10px;
+      font-family: monospace;
+      padding: 2px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+      pointer-events: none;
+      display: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.8);
+    }
+
+    .audio-clip.dragging .clip-time-tooltip {
+      display: block;
     }
 
     .clip-title {
@@ -399,30 +431,30 @@
       width: 100%;
       height: 36px;
       pointer-events: none;
+      border-radius: 4px;
     }
 
-    /* Всплывающая нижняя панель переключения дорожек - поднята выше */
     .clip-dock-menu {
       position: absolute;
-      bottom: 30px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #181818;
+      bottom: 14px;
+      left: 12px;
+      background: rgba(20, 20, 20, 0.95);
       border: 1px solid #555;
-      border-radius: 20px;
-      padding: 6px 14px;
+      border-radius: 12px;
+      padding: 6px 10px;
       display: flex;
       align-items: center;
-      gap: 12px;
-      z-index: 50;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.9);
+      gap: 10px;
+      z-index: 60;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.9);
+      backdrop-filter: blur(8px);
     }
 
     .clip-dock-title {
       font-size: 11px;
       font-weight: bold;
       color: var(--accent-lime);
-      max-width: 100px;
+      max-width: 90px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -430,7 +462,33 @@
 
     .clip-dock-btns {
       display: flex;
-      gap: 8px;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .nudge-group {
+      display: flex;
+      gap: 2px;
+      background: #111;
+      padding: 2px;
+      border-radius: 6px;
+      border: 1px solid #333;
+    }
+
+    .btn-nudge {
+      padding: 4px 6px;
+      font-size: 10px;
+      font-weight: bold;
+      background: #252525;
+      color: #fff;
+      border: 1px solid #444;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .btn-nudge:active {
+      background: var(--accent-lime);
+      color: #000;
     }
 
     .playhead {
@@ -547,19 +605,19 @@
       border: 1px solid #662222;
     }
 
-    /* Кнопки масштабирования - подняты выше */
     .zoom-controls {
       position: absolute;
-      bottom: 30px;
+      bottom: 14px;
       right: 12px;
       display: flex;
       gap: 6px;
-      z-index: 50;
-      background: rgba(0,0,0,0.85);
-      padding: 4px 6px;
-      border-radius: 20px;
-      border: 1px solid #444;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.8);
+      z-index: 60;
+      background: rgba(20, 20, 20, 0.95);
+      padding: 6px 10px;
+      border-radius: 12px;
+      border: 1px solid #555;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.9);
+      backdrop-filter: blur(8px);
     }
 
     #fileInput { display: none; }
@@ -627,16 +685,21 @@
       </div>
     </div>
 
-    <!-- Поднятое нижнее мини-меню -->
     <div class="clip-dock-menu" id="clipDockMenu" style="display: none;">
       <span class="clip-dock-title" id="dockClipTitle">Песня</span>
       <div class="clip-dock-btns">
-        <button class="btn" onclick="moveSelectedClipTrack(-1)">▲ Выше</button>
-        <button class="btn" onclick="moveSelectedClipTrack(1)">▼ Ниже</button>
+        <button class="btn" onclick="moveSelectedClipTrack(-1)">▲</button>
+        <button class="btn" onclick="moveSelectedClipTrack(1)">▼</button>
+        
+        <div class="nudge-group">
+          <button class="btn-nudge" onclick="nudgeClip(-1)" title="Сдвиг влево на 1с">◀ 1s</button>
+          <button class="btn-nudge" onclick="nudgeClip(-0.1)" title="Сдвиг влево на 0.1с">◀ 0.1s</button>
+          <button class="btn-nudge" onclick="nudgeClip(0.1)" title="Сдвиг вправо на 0.1с">0.1s ▶</button>
+          <button class="btn-nudge" onclick="nudgeClip(1)" title="Сдвиг вправо на 1с">1s ▶</button>
+        </div>
       </div>
     </div>
 
-    <!-- Поднятый зум -->
     <div class="zoom-controls">
       <button class="btn-mini" onclick="adjustZoom(1.25)">🔍 +</button>
       <button class="btn-mini" onclick="adjustZoom(0.8)">🔍 −</button>
@@ -648,6 +711,16 @@
       <div class="menu-header">
         <span class="menu-title" id="modalClipTitle">Редактирование клипа</span>
         <button class="btn-mini" onclick="closeClipModal()">✕</button>
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-label">
+          <span>Сдвиг во времени (сек)</span>
+          <span id="clipTimeVal">0.00с</span>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <input type="number" id="clipTimeInput" step="0.01" style="width: 100%; font-size: 14px;" onchange="updateClipStartTime(this.value)">
+        </div>
       </div>
 
       <div class="slider-group">
@@ -750,6 +823,7 @@
       renderTracks();
       renderRuler();
       setupTimelineScrubbing();
+      setupPinchToZoom();
       updateProjectStats();
     });
 
@@ -888,7 +962,7 @@
           updateProjectStats();
           if (isPlaying) restartLiveAudio();
         } catch (err) {
-          alert('Ошибка чтения файла iOS: ' + file.name);
+          alert('Ошибка чтения файла: ' + file.name);
         }
       }
       e.target.value = '';
@@ -907,12 +981,16 @@
         clipEl.style.width = (clip.duration * pixelsPerSecond) + 'px';
         clipEl.dataset.clipId = clip.id;
 
+        const mins = Math.floor(clip.startTime / 60).toString().padStart(2, '0');
+        const secs = (clip.startTime % 60).toFixed(2).padStart(5, '0');
+
         clipEl.innerHTML = `
+          <div class="clip-time-tooltip">${mins}:${secs}</div>
           <div class="clip-title">${clip.name}</div>
           <canvas class="clip-canvas"></canvas>
         `;
 
-        makeClipInteractive(clipEl, clip);
+        makeClipInteractiveCapCutStyle(clipEl, clip);
         lane.appendChild(clipEl);
         drawWaveform(clipEl.querySelector('canvas'), clip.audioBuffer);
       });
@@ -935,6 +1013,17 @@
       } else {
         dock.style.display = 'none';
       }
+    }
+
+    function nudgeClip(seconds) {
+      if (!selectedClipId) return;
+      const clip = clips.find(c => c.id === selectedClipId);
+      if (!clip) return;
+
+      clip.startTime = Math.max(0, clip.startTime + seconds);
+      renderClips();
+      updateProjectStats();
+      if (isPlaying) restartLiveAudio();
     }
 
     function moveSelectedClipTrack(direction) {
@@ -976,16 +1065,29 @@
       }
     }
 
-    /* Надежный универсальный Drag-&-Drop для мыши и тачскрина */
-    function makeClipInteractive(el, clip) {
+    /* Усовершенствованный алгоритм тач-перемещения клипов в стиле CapCut (Snapping, Tooltip, Vibrate) */
+    function makeClipInteractiveCapCutStyle(el, clip) {
       let startX, startLeft, isDragging = false;
+      let hasVibrated = false;
 
       const getX = (e) => (e.touches && e.touches.length > 0) ? e.touches[0].clientX : e.clientX;
+
+      const getSnapTargets = () => {
+        let targets = [0, pauseOffset];
+        clips.forEach(c => {
+          if (c.id !== clip.id) {
+            targets.push(c.startTime);
+            targets.push(c.startTime + c.duration);
+          }
+        });
+        return targets;
+      };
 
       const onStart = (e) => {
         startX = getX(e);
         startLeft = clip.startTime * pixelsPerSecond;
         isDragging = false;
+        hasVibrated = false;
 
         selectedClipId = clip.id;
         renderClips();
@@ -1000,33 +1102,117 @@
         const currentX = getX(e);
         const deltaX = currentX - startX;
 
-        if (Math.abs(deltaX) > 2) {
+        if (!isDragging && Math.abs(deltaX) > 3) {
           isDragging = true;
-          if (e.cancelable) e.preventDefault(); // глушим прокрутку страницы при перетаскивании
+          el.classList.add('dragging');
         }
 
         if (isDragging) {
-          let newLeft = Math.max(0, startLeft + deltaX);
-          clip.startTime = newLeft / pixelsPerSecond;
-          el.style.left = newLeft + 'px';
+          if (e.cancelable) e.preventDefault();
+
+          let rawTime = Math.max(0, (startLeft + deltaX) / pixelsPerSecond);
+          let snapThreshold = 0.15; // Порог магнита в секундах
+          let finalTime = rawTime;
+          let isSnapped = false;
+
+          const snapTargets = getSnapTargets();
+
+          // Магнит начала клипа
+          for (let target of snapTargets) {
+            if (Math.abs(rawTime - target) < snapThreshold) {
+              finalTime = target;
+              isSnapped = true;
+              break;
+            }
+          }
+
+          // Магнит конца клипа
+          if (!isSnapped) {
+            let clipEndTime = rawTime + clip.duration;
+            for (let target of snapTargets) {
+              if (Math.abs(clipEndTime - target) < snapThreshold) {
+                finalTime = Math.max(0, target - clip.duration);
+                isSnapped = true;
+                break;
+              }
+            }
+          }
+
+          if (isSnapped && !hasVibrated) {
+            if (navigator.vibrate) navigator.vibrate(20);
+            hasVibrated = true;
+          } else if (!isSnapped) {
+            hasVibrated = false;
+          }
+
+          clip.startTime = finalTime;
+          el.style.left = (finalTime * pixelsPerSecond) + 'px';
+
+          // Обновление плавающей плашки времени над клипом
+          const tooltip = el.querySelector('.clip-time-tooltip');
+          if (tooltip) {
+            const mins = Math.floor(finalTime / 60).toString().padStart(2, '0');
+            const secs = (finalTime % 60).toFixed(2).padStart(5, '0');
+            tooltip.innerText = `${mins}:${secs}`;
+          }
+
           updateProjectStats();
         }
       };
 
       const onEnd = () => {
+        el.classList.remove('dragging');
         window.removeEventListener('mousemove', onMove);
         window.removeEventListener('mouseup', onEnd);
         window.removeEventListener('touchmove', onMove);
         window.removeEventListener('touchend', onEnd);
 
         if (isDragging) {
-          renderOverviewMarkers();
+          renderClips();
+          updateProjectStats();
           if (isPlaying) restartLiveAudio();
         }
       };
 
       el.addEventListener('mousedown', onStart);
       el.addEventListener('touchstart', onStart, { passive: false });
+    }
+
+    /* Поддержка мультитач-зума двух пальцев (Pinch to zoom) */
+    function setupPinchToZoom() {
+      let initialDist = 0;
+      let initialZoom = pixelsPerSecond;
+
+      timelineScroll.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+          initialDist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+          );
+          initialZoom = pixelsPerSecond;
+        }
+      });
+
+      timelineScroll.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 2 && initialDist > 0) {
+          e.preventDefault();
+          const currentDist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+          );
+
+          const factor = currentDist / initialDist;
+          pixelsPerSecond = Math.max(10, Math.min(200, initialZoom * factor));
+
+          renderRuler();
+          renderClips();
+          updatePlayheadPosition();
+        }
+      }, { passive: false });
+
+      timelineScroll.addEventListener('touchend', (e) => {
+        if (e.touches.length < 2) initialDist = 0;
+      });
     }
 
     function openActiveClipModal() {
@@ -1043,12 +1229,32 @@
     function setupTimelineScrubbing() {
       const handleScrub = (e) => {
         if (e.target.closest('.audio-clip')) return;
-        selectedClipId = null;
-        renderClips();
 
         const rect = timelineWrapper.getBoundingClientRect();
         const clickX = e.clientX - rect.left;
-        pauseOffset = Math.max(0, clickX / pixelsPerSecond);
+        const targetTime = Math.max(0, clickX / pixelsPerSecond);
+
+        if (selectedClipId) {
+          const clip = clips.find(c => c.id === selectedClipId);
+          if (clip) {
+            const clipCenter = clip.startTime + (clip.duration / 2);
+            if (targetTime >= clipCenter) {
+              clip.startTime = Math.max(0, targetTime - clip.duration);
+            } else {
+              clip.startTime = targetTime;
+            }
+            renderClips();
+            updateProjectStats();
+            if (isPlaying) restartLiveAudio();
+            selectedClipId = null;
+            return;
+          }
+        }
+
+        selectedClipId = null;
+        renderClips();
+
+        pauseOffset = targetTime;
         updatePlayheadPosition();
 
         if (isPlaying) restartLiveAudio();
@@ -1256,6 +1462,9 @@
       if (!clip) return;
 
       document.getElementById('modalClipTitle').innerText = clip.name;
+      document.getElementById('clipTimeInput').value = clip.startTime.toFixed(2);
+      document.getElementById('clipTimeVal').innerText = clip.startTime.toFixed(2) + 'с';
+
       document.getElementById('clipVolSlider').value = clip.volume * 100;
       document.getElementById('clipVolVal').innerText = Math.round(clip.volume * 100) + '%';
       
@@ -1266,6 +1475,17 @@
       document.getElementById('clipFadeOutVal').innerText = (clip.fadeOut || 0) + 'с';
 
       document.getElementById('clipModal').classList.add('active');
+    }
+
+    function updateClipStartTime(val) {
+      const sec = Math.max(0, parseFloat(val) || 0);
+      document.getElementById('clipTimeVal').innerText = sec.toFixed(2) + 'с';
+      const clip = clips.find(c => c.id === selectedClipId);
+      if (clip) {
+        clip.startTime = sec;
+        renderClips();
+        updateProjectStats();
+      }
     }
 
     function closeClipModal(e) {
@@ -1463,7 +1683,6 @@
       setUint16(numOfChan);
       setUint32(sampleRate);
       setUint32(sampleRate * 2 * numOfChan);
-      setUint16(numOfChan * 2);
       setUint16(16);
       setUint32(0x61746164);
       setUint32(length - pos - 4);
