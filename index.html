@@ -47,7 +47,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 14px;
+      padding: 8px 12px;
       background-color: var(--card-bg);
       border-bottom: 1px solid var(--border-color);
       z-index: 10;
@@ -56,12 +56,12 @@
     .brand {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
     .avatar {
-      width: 36px;
-      height: 36px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       object-fit: cover;
       border: 1.5px solid var(--accent-white);
@@ -70,35 +70,36 @@
 
     .title-group h1 {
       font-family: 'Intro Demo', -apple-system, sans-serif;
-      font-size: 18px;
+      font-size: 16px;
       text-transform: uppercase;
       letter-spacing: 1px;
       line-height: 1;
     }
 
     .title-group span {
-      font-size: 9px;
+      font-size: 8px;
       color: var(--text-muted);
       letter-spacing: 0.5px;
     }
 
     .top-actions {
       display: flex;
-      gap: 6px;
+      gap: 4px;
+      align-items: center;
     }
 
     .btn {
       background: #222;
       color: #fff;
       border: 1px solid #444;
-      padding: 8px 10px;
-      border-radius: 8px;
-      font-size: 11px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-size: 10px;
       font-weight: 600;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
     }
 
     .btn:active {
@@ -148,7 +149,7 @@
     }
 
     .overview-bar {
-      height: 20px;
+      height: 18px;
       background: #151515;
       border: 1px solid #333;
       border-radius: 4px;
@@ -178,7 +179,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 8px 14px;
+      padding: 6px 12px;
       background: #0a0a0a;
       border-bottom: 1px solid var(--border-color);
     }
@@ -186,29 +187,30 @@
     .project-info {
       display: flex;
       flex-direction: column;
+      align-items: flex-end;
     }
 
     .time-display {
       font-family: monospace;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: bold;
       letter-spacing: 1px;
     }
 
     .total-duration {
-      font-size: 10px;
+      font-size: 9px;
       color: var(--text-muted);
     }
 
     .controls-main {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .btn-icon {
-      width: 38px;
-      height: 38px;
+      width: 34px;
+      height: 34px;
       border-radius: 50%;
       background: #1a1a1a;
       border: 1px solid #333;
@@ -220,8 +222,8 @@
     }
 
     .btn-icon svg {
-      width: 18px;
-      height: 18px;
+      width: 16px;
+      height: 16px;
       fill: currentColor;
     }
 
@@ -239,7 +241,7 @@
     }
 
     .track-headers {
-      width: 80px;
+      width: 75px;
       background: #0d0d0d;
       border-right: 1px solid var(--border-color);
       display: flex;
@@ -289,7 +291,7 @@
 
     .btn-mini {
       font-size: 9px;
-      padding: 3px 6px;
+      padding: 2px 5px;
       border-radius: 4px;
       background: #222;
       border: 1px solid #333;
@@ -308,7 +310,6 @@
       overflow-y: auto;
       position: relative;
       background: #050505;
-      touch-action: pan-x pan-y;
     }
 
     .timeline-wrapper {
@@ -364,9 +365,9 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 4px;
+      padding: 3px 4px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.5);
-      touch-action: none;
+      touch-action: pan-y;
     }
 
     .audio-clip.selected {
@@ -378,11 +379,11 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 4px;
+      gap: 2px;
     }
 
     .clip-title {
-      font-size: 10px;
+      font-size: 9px;
       font-weight: bold;
       white-space: nowrap;
       overflow: hidden;
@@ -394,13 +395,13 @@
 
     .clip-move-btns {
       display: flex;
-      gap: 2px;
+      gap: 1px;
       z-index: 3;
     }
 
     .btn-clip-move {
-      background: rgba(0, 0, 0, 0.6);
-      border: 1px solid #555;
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid #666;
       color: #fff;
       width: 18px;
       height: 18px;
@@ -563,9 +564,10 @@
       </div>
     </div>
     <div class="top-actions">
+      <button class="btn" onclick="openActiveClipModal()" title="Настройки выбранного клипа">⚙️ Меню</button>
       <button class="btn btn-rec" id="recBtn" onclick="toggleRecord()">🔴 Запись</button>
       <button class="btn" onclick="document.getElementById('fileInput').click()">+ Файл</button>
-      <button class="btn btn-lime" onclick="openExportModal()">💾 Сохранить</button>
+      <button class="btn btn-lime" onclick="openExportModal()">💾</button>
     </div>
   </header>
 
@@ -684,7 +686,6 @@
     </div>
   </div>
 
-  <!-- РАСШИРЕННЫЙ ФИЛЬТР: принимает абсолютно все аудио/видео форматы с телефона и Telegram -->
   <input type="file" id="fileInput" accept="audio/*,video/*,.mp3,.m4a,.wav,.aac,.ogg,.flac,.m4p,.opus" multiple onchange="handleFileSelect(event)">
 
   <script>
@@ -770,7 +771,7 @@
           recBtn.classList.add('recording');
           recBtn.innerText = '⏹ Стоп';
         } catch (err) {
-          alert('Доступ к микрофону отклонен или не поддерживается!');
+          alert('Доступ к микрофону отклонен!');
         }
       } else {
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
@@ -863,7 +864,7 @@
           updateProjectStats();
           if (isPlaying) restartLiveAudio();
         } catch (err) {
-          alert('Ошибка чтения файла (возможно, формат не поддерживается браузером iOS): ' + file.name);
+          alert('Ошибка чтения файла iOS: ' + file.name);
         }
       }
       e.target.value = '';
@@ -884,9 +885,11 @@
 
         clipEl.innerHTML = `
           <div class="clip-header-row">
-            <div class="clip-title">${clip.name}</div>
             <div class="clip-move-btns">
               <button class="btn-clip-move" onclick="moveClipTrack(event, ${clip.id}, -1)" title="Выше">▲</button>
+            </div>
+            <div class="clip-title">${clip.name}</div>
+            <div class="clip-move-btns">
               <button class="btn-clip-move" onclick="moveClipTrack(event, ${clip.id}, 1)" title="Ниже">▼</button>
             </div>
           </div>
@@ -911,6 +914,7 @@
 
       if (newIndex >= 0 && newIndex < trackIds.length) {
         clip.trackId = trackIds[newIndex];
+        selectedClipId = clip.id;
         renderClips();
         if (isPlaying) restartLiveAudio();
       }
@@ -940,63 +944,37 @@
     }
 
     function makeClipInteractive(el, clip) {
-      let startX, startY, startLeft, isDragging = false;
-      let lastTapTime = 0;
+      let startX, startLeft, isDragging = false;
 
       const onStart = (e) => {
         if (e.target.closest('.clip-move-btns')) return;
         
         const touch = e.touches ? e.touches[0] : e;
         startX = touch.clientX;
-        startY = touch.clientY;
         startLeft = clip.startTime * pixelsPerSecond;
         isDragging = false;
 
         selectedClipId = clip.id;
         renderClips();
 
-        const currentTime = new Date().getTime();
-        const tapLength = currentTime - lastTapTime;
-        if (tapLength < 300 && tapLength > 0) {
-          e.preventDefault();
-          openClipModal(clip.id);
-          return;
-        }
-        lastTapTime = currentTime;
-
-        document.addEventListener('mousemove', onMove, { passive: false });
+        document.addEventListener('mousemove', onMove);
         document.addEventListener('mouseup', onEnd);
-        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('touchmove', onMove, { passive: true });
         document.addEventListener('touchend', onEnd);
       };
 
       const onMove = (e) => {
         const touch = e.touches ? e.touches[0] : e;
         const deltaX = touch.clientX - startX;
-        const deltaY = touch.clientY - startY;
 
-        if (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4) {
+        if (Math.abs(deltaX) > 3) {
           isDragging = true;
         }
 
         if (isDragging) {
-          if (e.cancelable) e.preventDefault();
-
           let newLeft = Math.max(0, startLeft + deltaX);
           clip.startTime = newLeft / pixelsPerSecond;
           el.style.left = newLeft + 'px';
-
-          const lanes = document.querySelectorAll('.track-lane');
-          lanes.forEach(lane => {
-            const rect = lane.getBoundingClientRect();
-            if (touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
-              const newTrackId = parseInt(lane.dataset.trackId);
-              if (newTrackId !== clip.trackId) {
-                clip.trackId = newTrackId;
-                lane.appendChild(el);
-              }
-            }
-          });
           updateProjectStats();
         }
       };
@@ -1014,7 +992,18 @@
       };
 
       el.addEventListener('mousedown', onStart);
-      el.addEventListener('touchstart', onStart, { passive: false });
+      el.addEventListener('touchstart', onStart, { passive: true });
+    }
+
+    function openActiveClipModal() {
+      if (!selectedClipId) {
+        if (clips.length > 0) {
+          selectedClipId = clips[0].id; // берем первый попавшийся, если ничего не выбрано
+        } else {
+          return alert('Нет доступных клипов на таймлайне!');
+        }
+      }
+      openClipModal(selectedClipId);
     }
 
     function setupTimelineScrubbing() {
@@ -1278,7 +1267,7 @@
     }
 
     function pasteClipFromClipboard() {
-      if (!clipboardClip) return alert('Сначала скопируйте какой-нибудь фрагмент!');
+      if (!clipboardClip) return alert('Скопируйте фрагмент!');
 
       const pastedClip = {
         ...clipboardClip,
@@ -1418,7 +1407,7 @@
       a.click();
       document.body.removeChild(a);
       closeExportModal();
-      alert('Файл сохранен напрямую в ваши файлы/загрузки!');
+      alert('Файл сохранен в Загрузки!');
     }
 
     function audioBufferToWav(buffer) {
