@@ -374,6 +374,13 @@
       box-shadow: 0 0 10px rgba(57,255,20,0.4);
     }
 
+    .clip-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 4px;
+    }
+
     .clip-title {
       font-size: 10px;
       font-weight: bold;
@@ -382,11 +389,36 @@
       text-overflow: ellipsis;
       color: #fff;
       pointer-events: none;
+      flex: 1;
+    }
+
+    .clip-move-btns {
+      display: flex;
+      gap: 2px;
+      z-index: 3;
+    }
+
+    .btn-clip-move {
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid #555;
+      color: #fff;
+      width: 18px;
+      height: 18px;
+      border-radius: 3px;
+      font-size: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .btn-clip-move:active {
+      background: #444;
     }
 
     .clip-canvas {
       width: 100%;
-      height: 36px;
+      height: 32px;
       pointer-events: none;
     }
 
@@ -652,7 +684,8 @@
     </div>
   </div>
 
-  <input type="file" id="fileInput" accept="audio/*,video/*" multiple onchange="handleFileSelect(event)">
+  <!-- РАСШИРЕННЫЙ ФИЛЬТР: принимает абсолютно все аудио/видео форматы с телефона и Telegram -->
+  <input type="file" id="fileInput" accept="audio/*,video/*,.mp3,.m4a,.wav,.aac,.ogg,.flac,.m4p,.opus" multiple onchange="handleFileSelect(event)">
 
   <script>
     let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -830,7 +863,7 @@
           updateProjectStats();
           if (isPlaying) restartLiveAudio();
         } catch (err) {
-          alert('Ошибка чтения файла: ' + file.name);
+          alert('Ошибка чтения файла (возможно, формат не поддерживается браузером iOS): ' + file.name);
         }
       }
       e.target.value = '';
@@ -850,7 +883,13 @@
         clipEl.dataset.clipId = clip.id;
 
         clipEl.innerHTML = `
-          <div class="clip-title">${clip.name}</div>
+          <div class="clip-header-row">
+            <div class="clip-title">${clip.name}</div>
+            <div class="clip-move-btns">
+              <button class="btn-clip-move" onclick="moveClipTrack(event, ${clip.id}, -1)" title="Выше">▲</button>
+              <button class="btn-clip-move" onclick="moveClipTrack(event, ${clip.id}, 1)" title="Ниже">▼</button>
+            </div>
+          </div>
           <canvas class="clip-canvas"></canvas>
         `;
 
@@ -861,6 +900,22 @@
       renderOverviewMarkers();
     }
 
+    function moveClipTrack(e, clipId, direction) {
+      e.stopPropagation();
+      const clip = clips.find(c => c.id === clipId);
+      if (!clip) return;
+
+      const trackIds = tracks.map(t => t.id);
+      const currentIndex = trackIds.indexOf(clip.trackId);
+      const newIndex = currentIndex + direction;
+
+      if (newIndex >= 0 && newIndex < trackIds.length) {
+        clip.trackId = trackIds[newIndex];
+        renderClips();
+        if (isPlaying) restartLiveAudio();
+      }
+    }
+
     function drawWaveform(canvas, buffer) {
       const ctx = canvas.getContext('2d');
       const data = buffer.getChannelData(0);
@@ -868,7 +923,7 @@
       const amp = canvas.height / 2;
 
       canvas.width = canvas.clientWidth || 100;
-      canvas.height = canvas.clientHeight || 36;
+      canvas.height = canvas.clientHeight || 32;
 
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
@@ -885,9 +940,12 @@
     }
 
     function makeClipInteractive(el, clip) {
-      let startX, startY, startLeft, isDragging = false, longPressTimer = null;
+      let startX, startY, startLeft, isDragging = false;
+      let lastTapTime = 0;
 
       const onStart = (e) => {
+        if (e.target.closest('.clip-move-btns')) return;
+        
         const touch = e.touches ? e.touches[0] : e;
         startX = touch.clientX;
         startY = touch.clientY;
@@ -897,11 +955,14 @@
         selectedClipId = clip.id;
         renderClips();
 
-        longPressTimer = setTimeout(() => {
-          if (!isDragging) {
-            openClipModal(clip.id);
-          }
-        }, 500);
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - lastTapTime;
+        if (tapLength < 300 && tapLength > 0) {
+          e.preventDefault();
+          openClipModal(clip.id);
+          return;
+        }
+        lastTapTime = currentTime;
 
         document.addEventListener('mousemove', onMove, { passive: false });
         document.addEventListener('mouseup', onEnd);
@@ -914,11 +975,8 @@
         const deltaX = touch.clientX - startX;
         const deltaY = touch.clientY - startY;
 
-        if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
-          if (!isDragging) {
-            isDragging = true;
-            clearTimeout(longPressTimer);
-          }
+        if (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4) {
+          isDragging = true;
         }
 
         if (isDragging) {
@@ -944,7 +1002,6 @@
       };
 
       const onEnd = () => {
-        clearTimeout(longPressTimer);
         document.removeEventListener('mousemove', onMove);
         document.removeEventListener('mouseup', onEnd);
         document.removeEventListener('touchmove', onMove);
