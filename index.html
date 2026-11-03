@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Фябаmp3 — Mobile DAW</title>
+  <link rel="icon" href="kitty.jpg" type="image/jpeg">
+  <link rel="apple-touch-icon" href="kitty.jpg">
+  <style>
+    @font-face {
+      font-family: 'Intro Demo';
+      src: local('Intro Demo'), local('IntroDemo-Black'), local('Montserrat-ExtraBold'), local('Inter-Black');
+      font-weight: 900;
+    }
+
+    :root {
+      --bg-color: #000000;
+      --card-bg: #111111;
+      --border-color: #222222;
+      --accent-white: #ffffff;
+      --accent-lime: #39ff14;
+      --text-muted: #888888;
+      --clip-bg: #2e2e2e;
+      --clip-border: #ffffff;
+      --playhead-color: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--accent-white);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background-color: var(--card-bg);
+      border-bottom: 1px solid var(--border-color);
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1.5px solid var(--accent-white);
+      background-color: #222;
+    }
+
+    .title-group h1 {
+      font-family: 'Intro Demo', -apple-system, sans-serif;
+      font-size: 18px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      line-height: 1;
+    }
+
+    .title-group span {
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .btn {
+      background: #222;
+      color: #fff;
+      border: 1px solid #444;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:active {
+      background: #333;
+      transform: scale(0.97);
+    }
+
+    .btn-lime {
+      background: var(--accent-lime);
+      color: #000;
+      border: none;
+      font-weight: bold;
+    }
+
+    .btn-rec {
+      background: #3a1111;
+      color: #ff5555;
+      border: 1px solid #662222;
+    }
+
+    .btn-rec.recording {
+      background: #ff3333;
+      color: #fff;
+      animation: pulse-red 1s infinite;
+    }
+
+    @keyframes pulse-red {
+      0% { box-shadow: 0 0 0 0 rgba(255, 51, 51, 0.7); }
+      70% { box-shadow: 0 0 0 8px rgba(255, 51, 51, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 51, 51, 0); }
+    }
+
+    .overview-bar-container {
+      background: #080808;
+      border-bottom: 1px solid var(--border-color);
+      padding: 4px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .overview-label {
+      font-size: 9px;
+      color: var(--accent-lime);
+      font-weight: bold;
+      letter-spacing: 0.5px;
+    }
+
+    .overview-bar {
+      height: 20px;
+      background: #151515;
+      border: 1px solid #333;
+      border-radius: 4px;
+      position: relative;
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    .overview-progress {
+      position: absolute;
+      top: 0; bottom: 0; left: 0;
+      background: rgba(57, 255, 20, 0.25);
+      border-right: 2px solid var(--accent-lime);
+      pointer-events: none;
+    }
+
+    .overview-clip-marker {
+      position: absolute;
+      top: 2px; bottom: 2px;
+      background: var(--accent-lime);
+      opacity: 0.8;
+      border-radius: 2px;
+      pointer-events: none;
+    }
+
+    .transport {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 14px;
+      background: #0a0a0a;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .project-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .time-display {
+      font-family: monospace;
+      font-size: 16px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .total-duration {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .controls-main {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .btn-icon svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    .btn-icon.play {
+      background: #fff;
+      color: #000;
+      border: none;
+    }
+
+    .workspace-container {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .track-headers {
+      width: 80px;
+      background: #0d0d0d;
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      z-index: 5;
+      margin-top: 26px;
+      overflow-y: hidden;
+    }
+
+    .track-header {
+      height: 80px;
+      border-bottom: 1px solid var(--border-color);
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-size: 10px;
+      background: #111;
+      flex-shrink: 0;
+    }
+
+    .track-title {
+      font-weight: bold;
+      color: var(--text-muted);
+    }
+
+    .track-controls {
+      display: flex;
+      gap: 4px;
+    }
+
+    .add-track-btn {
+      padding: 10px 4px;
+      background: #161616;
+      border-bottom: 1px solid var(--border-color);
+      color: #fff;
+      font-size: 11px;
+      font-weight: bold;
+      text-align: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .add-track-btn:active {
+      background: #252525;
+    }
+
+    .btn-mini {
+      font-size: 9px;
+      padding: 3px 6px;
+      border-radius: 4px;
+      background: #222;
+      border: 1px solid #333;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .btn-mini.active {
+      background: #fff;
+      color: #000;
+    }
+
+    .timeline-scroll-area {
+      flex: 1;
+      overflow-x: auto;
+      overflow-y: auto;
+      position: relative;
+      background: #050505;
+      touch-action: pan-x pan-y;
+    }
+
+    .timeline-wrapper {
+      position: relative;
+      min-width: 2500px;
+    }
+
+    .timeline-ruler {
+      height: 26px;
+      background: #111;
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 4;
+      cursor: pointer;
+    }
+
+    .ruler-ticks {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .ruler-tick {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      border-left: 1px solid #333;
+      font-size: 9px;
+      color: #666;
+      padding-left: 3px;
+      padding-top: 4px;
+      pointer-events: none;
+    }
+
+    .track-lane {
+      height: 80px;
+      border-bottom: 1px solid var(--border-color);
+      position: relative;
+      background-image: linear-gradient(to right, #111 1px, transparent 1px);
+      background-size: 40px 100%;
+    }
+
+    .audio-clip {
+      position: absolute;
+      top: 6px;
+      height: 68px;
+      background: var(--clip-bg);
+      border: 1px solid var(--clip-border);
+      border-radius: 6px;
+      overflow: hidden;
+      cursor: grab;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 4px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+      touch-action: none;
+    }
+
+    .audio-clip.selected {
+      border: 2px solid var(--accent-lime);
+      box-shadow: 0 0 10px rgba(57,255,20,0.4);
+    }
+
+    .clip-title {
+      font-size: 10px;
+      font-weight: bold;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #fff;
+      pointer-events: none;
+    }
+
+    .clip-canvas {
+      width: 100%;
+      height: 36px;
+      pointer-events: none;
+    }
+
+    .playhead {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--playhead-color);
+      z-index: 6;
+      pointer-events: none;
+    }
+
+    .playhead::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -5px;
+      width: 12px;
+      height: 12px;
+      background: #fff;
+      clip-path: polygon(0 0, 100% 0, 50% 100%);
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      align-items: flex-end;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .context-menu {
+      width: 100%;
+      background: #141414;
+      border-top: 1px solid #333;
+      border-radius: 16px 16px 0 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transform: translateY(100%);
+      transition: transform 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-overlay.active .context-menu {
+      transform: translateY(0);
+    }
+
+    .menu-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #222;
+      padding-bottom: 8px;
+    }
+
+    .menu-title {
+      font-family: 'Intro Demo', sans-serif;
+      font-size: 15px;
+    }
+
+    .slider-group, .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .slider-label, .input-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #aaa;
+    }
+
+    input[type="range"] {
+      accent-color: #fff;
+      width: 100%;
+      height: 6px;
+      background: #333;
+      border-radius: 3px;
+    }
+
+    input[type="text"], select {
+      background: #222;
+      border: 1px solid #444;
+      color: #fff;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .menu-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .btn-danger {
+      background: #3a1111;
+      color: #ff5555;
+      border: 1px solid #662222;
+    }
+
+    .zoom-controls {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      display: flex;
+      gap: 6px;
+      z-index: 8;
+      background: rgba(0,0,0,0.8);
+      padding: 4px;
+      border-radius: 20px;
+      border: 1px solid #333;
+    }
+
+    #fileInput { display: none; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <img src="kitty.jpg" alt="Kitty" class="avatar" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐱</text></svg>'">
+      <div class="title-group">
+        <h1>Фябаmp3</h1>
+        <span>MOBILE DAW STUDIO</span>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="btn btn-rec" id="recBtn" onclick="toggleRecord()">🔴 Запись</button>
+      <button class="btn" onclick="document.getElementById('fileInput').click()">+ Файл</button>
+      <button class="btn btn-lime" onclick="openExportModal()">💾 Сохранить</button>
+    </div>
+  </header>
+
+  <div class="overview-bar-container">
+    <span class="overview-label">НАВИГАТОР ТРЕКА</span>
+    <div class="overview-bar" id="overviewBar" onclick="scrubViaOverview(event)">
+      <div id="overviewMarkers"></div>
+      <div class="overview-progress" id="overviewProgress"></div>
+    </div>
+  </div>
+
+  <div class="transport">
+    <div class="controls-main">
+      <!-- Play Icon -->
+      <button class="btn-icon play" id="playBtn" onclick="togglePlay()" title="Воспроизведение">
+        <svg id="playIconSvg" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <!-- Stop Icon -->
+      <button class="btn-icon" onclick="stopPlay()" title="Стоп">
+        <svg viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
+      </button>
+      <!-- Saw Blade Icon for Cut -->
+      <button class="btn-icon" onclick="splitClipAtPlayhead()" title="Разрезать пилой">
+        <svg viewBox="0 0 24 24"><path d="M19 3L15 7L12 4L9 7L6 4L3 7V21H21V3L19 3ZM19 19H5V9.83L6.83 8L9.83 11L12.83 8L15.83 11L19 7.83V19Z"/></svg>
+      </button>
+      <!-- Paste Icon -->
+      <button class="btn-icon" onclick="pasteClipFromClipboard()" title="Вставить из буфера">
+        <svg viewBox="0 0 24 24"><path d="M19 2h-4.18C14.4 0.84 13.3 0 12 0c-1.3 0-2.4 0.84-2.82 2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm7 18H5V4h2v3h10V4h2v16z"/></svg>
+      </button>
+    </div>
+    <div class="project-info">
+      <div class="time-display" id="timeDisplay">00:00.00</div>
+      <div class="total-duration" id="totalDuration">Длина: 00:00.00</div>
+    </div>
+  </div>
+
+  <div class="workspace-container">
+    <div class="track-headers" id="trackHeaders"></div>
+
+    <div class="timeline-scroll-area" id="timelineScroll">
+      <div class="timeline-wrapper" id="timelineWrapper">
+        <div class="timeline-ruler" id="ruler">
+          <div class="ruler-ticks" id="rulerTicks"></div>
+        </div>
+        <div id="tracksLanes"></div>
+        <div class="playhead" id="playhead" style="left: 0px;"></div>
+      </div>
+    </div>
+
+    <div class="zoom-controls">
+      <button class="btn-mini" onclick="adjustZoom(1.25)">🔍 +</button>
+      <button class="btn-mini" onclick="adjustZoom(0.8)">🔍 −</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="clipModal" onclick="closeClipModal(event)">
+    <div class="context-menu" onclick="event.stopPropagation()">
+      <div class="menu-header">
+        <span class="menu-title" id="modalClipTitle">Редактирование клипа</span>
+        <button class="btn-mini" onclick="closeClipModal()">✕</button>
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-label">
+          <span>Громкость</span>
+          <span id="clipVolVal">100%</span>
+        </div>
+        <input type="range" id="clipVolSlider" min="0" max="200" value="100" oninput="updateClipVolume(this.value)">
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-label">
+          <span>Fade In (Появление)</span>
+          <span id="clipFadeInVal">0.0с</span>
+        </div>
+        <input type="range" id="clipFadeInSlider" min="0" max="10" step="0.1" value="0" oninput="updateClipFadeIn(this.value)">
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-label">
+          <span>Fade Out (Затухание)</span>
+          <span id="clipFadeOutVal">0.0с</span>
+        </div>
+        <input type="range" id="clipFadeOutSlider" min="0" max="10" step="0.1" value="0" oninput="updateClipFadeOut(this.value)">
+      </div>
+
+      <div class="menu-actions">
+        <button class="btn" onclick="copyCurrentClip()">📋 Скопировать</button>
+        <button class="btn" onclick="reverseCurrentClip()">🔄 Реверс</button>
+        <button class="btn btn-danger" onclick="deleteCurrentClip()">🗑️ Удалить</button>
+        <button class="btn btn-primary" onclick="closeClipModal()">Готово</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="exportModal" onclick="closeExportModal(event)">
+    <div class="context-menu" onclick="event.stopPropagation()">
+      <div class="menu-header">
+        <span class="menu-title">Экспорт аудиофайла</span>
+        <button class="btn-mini" onclick="closeExportModal()">✕</button>
+      </div>
+
+      <div class="input-group">
+        <span class="input-label">Имя файла:</span>
+        <input type="text" id="exportFilename" value="Fiaba_Track_1">
+      </div>
+
+      <div class="input-group">
+        <span class="input-label">Формат:</span>
+        <select id="exportFormat">
+          <option value="wav">WAV (Высокое качество)</option>
+          <option value="mp3">MP3 / WebM Audio</option>
+        </select>
+      </div>
+
+      <div class="menu-actions">
+        <button class="btn" onclick="shareProject()">📤 Поделиться</button>
+        <button class="btn btn-lime" onclick="confirmExport()">💾 Скачать</button>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="fileInput" accept="audio/*,video/*" multiple onchange="handleFileSelect(event)">
+
+  <script>
+    let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let pixelsPerSecond = 40;
+    let tracks = [
+      { id: 1, name: 'Track 1', muted: false },
+      { id: 2, name: 'Track 2', muted: false },
+      { id: 3, name: 'Track 3', muted: false },
+      { id: 4, name: 'Track 4', muted: false }
+    ];
+    let clips = [];
+    let clipboardClip = null;
+    let maxProjectDuration = 0;
+    
+    let isPlaying = false;
+    let playbackStartTime = 0;
+    let pauseOffset = 0;
+    let activeSources = [];
+    let animationFrameId = null;
+    let selectedClipId = null;
+
+    // Recording State
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let isRecording = false;
+
+    const timelineScroll = document.getElementById('timelineScroll');
+    const timelineWrapper = document.getElementById('timelineWrapper');
+    const playhead = document.getElementById('playhead');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const totalDurationDisplay = document.getElementById('totalDuration');
+
+    timelineScroll.addEventListener('scroll', () => {
+      document.getElementById('trackHeaders').scrollTop = timelineScroll.scrollTop;
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderTracks();
+      renderRuler();
+      setupTimelineScrubbing();
+      updateProjectStats();
+    });
+
+    /* Microphone Recording */
+    async function toggleRecord() {
+      const recBtn = document.getElementById('recBtn');
+
+      if (!isRecording) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          recordedChunks = [];
+
+          mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) recordedChunks.push(e.data);
+          };
+
+          mediaRecorder.onstop = async () => {
+            const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+            const arrayBuffer = await blob.arrayBuffer();
+            const decodedBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+            const newClip = {
+              id: Date.now() + Math.random(),
+              trackId: 1,
+              startTime: pauseOffset,
+              duration: decodedBuffer.duration,
+              audioBuffer: decodedBuffer,
+              name: `Запись_${new Date().toLocaleTimeString().replace(/:/g, '-')}`,
+              volume: 1.0,
+              fadeIn: 0,
+              fadeOut: 0
+            };
+
+            clips.push(newClip);
+            renderClips();
+            updateProjectStats();
+            
+            // Stop mic tracks
+            stream.getTracks().forEach(track => track.stop());
+          };
+
+          mediaRecorder.start();
+          isRecording = true;
+          recBtn.classList.add('recording');
+          recBtn.innerText = '⏹ Стоп';
+        } catch (err) {
+          alert('Доступ к микрофону отклонен или не поддерживается!');
+        }
+      } else {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          mediaRecorder.stop();
+        }
+        isRecording = false;
+        recBtn.classList.remove('recording');
+        recBtn.innerText = '🔴 Запись';
+      }
+    }
+
+    function addTrack() {
+      const nextId = tracks.length ? Math.max(...tracks.map(t => t.id)) + 1 : 1;
+      tracks.push({ id: nextId, name: `Track ${nextId}`, muted: false });
+      renderTracks();
+    }
+
+    function renderTracks() {
+      const headersContainer = document.getElementById('trackHeaders');
+      const lanesContainer = document.getElementById('tracksLanes');
+      headersContainer.innerHTML = '';
+      lanesContainer.innerHTML = '';
+
+      tracks.forEach(track => {
+        const header = document.createElement('div');
+        header.className = 'track-header';
+        header.innerHTML = `
+          <span class="track-title">${track.name}</span>
+          <div class="track-controls">
+            <button class="btn-mini ${track.muted ? 'active' : ''}" onclick="toggleMuteTrack(${track.id})">Mute</button>
+          </div>
+        `;
+        headersContainer.appendChild(header);
+
+        const lane = document.createElement('div');
+        lane.className = 'track-lane';
+        lane.dataset.trackId = track.id;
+        lanesContainer.appendChild(lane);
+      });
+
+      const addBtn = document.createElement('div');
+      addBtn.className = 'add-track-btn';
+      addBtn.innerText = '+ Дорожка';
+      addBtn.onclick = addTrack;
+      headersContainer.appendChild(addBtn);
+
+      renderClips();
+    }
+
+    function renderRuler() {
+      const rulerTicks = document.getElementById('rulerTicks');
+      rulerTicks.innerHTML = '';
+      const totalSeconds = 600;
+      timelineWrapper.style.width = (totalSeconds * pixelsPerSecond) + 'px';
+
+      for (let i = 0; i < totalSeconds; i += 5) {
+        const tick = document.createElement('div');
+        tick.className = 'ruler-tick';
+        tick.style.left = (i * pixelsPerSecond) + 'px';
+        const mins = Math.floor(i / 60);
+        const secs = (i % 60).toString().padStart(2, '0');
+        tick.innerText = `${mins}:${secs}`;
+        rulerTicks.appendChild(tick);
+      }
+    }
+
+    async function handleFileSelect(e) {
+      const files = e.target.files;
+      if (!files.length) return;
+
+      for (let file of files) {
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const decodedBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+          
+          const newClip = {
+            id: Date.now() + Math.random(),
+            trackId: 1,
+            startTime: pauseOffset,
+            duration: decodedBuffer.duration,
+            audioBuffer: decodedBuffer,
+            name: file.name.replace(/\.[^/.]+$/, ""),
+            volume: 1.0,
+            fadeIn: 0,
+            fadeOut: 0
+          };
+
+          clips.push(newClip);
+          renderClips();
+          updateProjectStats();
+          if (isPlaying) restartLiveAudio();
+        } catch (err) {
+          alert('Ошибка чтения файла: ' + file.name);
+        }
+      }
+      e.target.value = '';
+    }
+
+    function renderClips() {
+      document.querySelectorAll('.audio-clip').forEach(el => el.remove());
+
+      clips.forEach(clip => {
+        const lane = document.querySelector(`.track-lane[data-track-id="${clip.trackId}"]`);
+        if (!lane) return;
+
+        const clipEl = document.createElement('div');
+        clipEl.className = `audio-clip ${selectedClipId === clip.id ? 'selected' : ''}`;
+        clipEl.style.left = (clip.startTime * pixelsPerSecond) + 'px';
+        clipEl.style.width = (clip.duration * pixelsPerSecond) + 'px';
+        clipEl.dataset.clipId = clip.id;
+
+        clipEl.innerHTML = `
+          <div class="clip-title">${clip.name}</div>
+          <canvas class="clip-canvas"></canvas>
+        `;
+
+        makeClipInteractive(clipEl, clip);
+        lane.appendChild(clipEl);
+        drawWaveform(clipEl.querySelector('canvas'), clip.audioBuffer);
+      });
+      renderOverviewMarkers();
+    }
+
+    function drawWaveform(canvas, buffer) {
+      const ctx = canvas.getContext('2d');
+      const data = buffer.getChannelData(0);
+      const step = Math.ceil(data.length / 120);
+      const amp = canvas.height / 2;
+
+      canvas.width = canvas.clientWidth || 100;
+      canvas.height = canvas.clientHeight || 36;
+
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+
+      for (let i = 0; i < 120; i++) {
+        let min = 1.0, max = -1.0;
+        for (let j = 0; j < step; j++) {
+          const datum = data[(i * step) + j];
+          if (datum < min) min = datum;
+          if (datum > max) max = datum;
+        }
+        ctx.fillRect(i * (canvas.width / 120), (1 + min) * amp, 1.5, Math.max(1, (max - min) * amp));
+      }
+    }
+
+    function makeClipInteractive(el, clip) {
+      let startX, startLeft, isDragging = false, longPressTimer = null;
+
+      const onStart = (e) => {
+        const touch = e.touches ? e.touches[0] : e;
+        startX = touch.clientX;
+        startLeft = clip.startTime * pixelsPerSecond;
+        isDragging = false;
+
+        selectedClipId = clip.id;
+        renderClips();
+
+        longPressTimer = setTimeout(() => {
+          if (!isDragging) {
+            openClipModal(clip.id);
+          }
+        }, 500);
+
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onEnd);
+        document.addEventListener('touchmove', onMove);
+        document.addEventListener('touchend', onEnd);
+      };
+
+      const onMove = (e) => {
+        const touch = e.touches ? e.touches[0] : e;
+        const deltaX = touch.clientX - startX;
+
+        if (Math.abs(deltaX) > 5) {
+          isDragging = true;
+          clearTimeout(longPressTimer);
+        }
+
+        if (isDragging) {
+          let newLeft = Math.max(0, startLeft + deltaX);
+          clip.startTime = newLeft / pixelsPerSecond;
+          el.style.left = newLeft + 'px';
+
+          const lanes = document.querySelectorAll('.track-lane');
+          lanes.forEach(lane => {
+            const rect = lane.getBoundingClientRect();
+            if (touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+              const newTrackId = parseInt(lane.dataset.trackId);
+              if (newTrackId !== clip.trackId) {
+                clip.trackId = newTrackId;
+                lane.appendChild(el);
+              }
+            }
+          });
+          updateProjectStats();
+        }
+      };
+
+      const onEnd = () => {
+        clearTimeout(longPressTimer);
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onEnd);
+        document.removeEventListener('touchmove', onMove);
+        document.removeEventListener('touchend', onEnd);
+
+        if (isDragging) {
+          renderOverviewMarkers();
+          if (isPlaying) restartLiveAudio();
+        }
+      };
+
+      el.addEventListener('mousedown', onStart);
+      el.addEventListener('touchstart', onStart);
+    }
+
+    function setupTimelineScrubbing() {
+      const handleScrub = (e) => {
+        if (e.target.closest('.audio-clip')) return;
+        selectedClipId = null;
+        renderClips();
+
+        const rect = timelineWrapper.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        pauseOffset = Math.max(0, clickX / pixelsPerSecond);
+        updatePlayheadPosition();
+
+        if (isPlaying) restartLiveAudio();
+      };
+
+      timelineWrapper.addEventListener('click', handleScrub);
+    }
+
+    function updatePlayheadPosition() {
+      playhead.style.left = (pauseOffset * pixelsPerSecond) + 'px';
+      const mins = Math.floor(pauseOffset / 60).toString().padStart(2, '0');
+      const secs = (pauseOffset % 60).toFixed(2).padStart(5, '0');
+      timeDisplay.innerText = `${mins}:${secs}`;
+
+      const overviewProgress = document.getElementById('overviewProgress');
+      if (maxProjectDuration > 0) {
+        const pct = Math.min(100, (pauseOffset / maxProjectDuration) * 100);
+        overviewProgress.style.width = pct + '%';
+      } else {
+        overviewProgress.style.width = '0%';
+      }
+    }
+
+    function updateProjectStats() {
+      maxProjectDuration = 0;
+      clips.forEach(c => {
+        if (c.startTime + c.duration > maxProjectDuration) maxProjectDuration = c.startTime + c.duration;
+      });
+      const mins = Math.floor(maxProjectDuration / 60).toString().padStart(2, '0');
+      const secs = (maxProjectDuration % 60).toFixed(2).padStart(5, '0');
+      totalDurationDisplay.innerText = `Длина: ${mins}:${secs}`;
+      renderOverviewMarkers();
+    }
+
+    function renderOverviewMarkers() {
+      const container = document.getElementById('overviewMarkers');
+      container.innerHTML = '';
+      if (maxProjectDuration <= 0) return;
+
+      clips.forEach(clip => {
+        const marker = document.createElement('div');
+        marker.className = 'overview-clip-marker';
+        marker.style.left = ((clip.startTime / maxProjectDuration) * 100) + '%';
+        marker.style.width = Math.max(2, (clip.duration / maxProjectDuration) * 100) + '%';
+        container.appendChild(marker);
+      });
+    }
+
+    function scrubViaOverview(e) {
+      if (maxProjectDuration <= 0) return;
+      const rect = document.getElementById('overviewBar').getBoundingClientRect();
+      const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      pauseOffset = pct * maxProjectDuration;
+      updatePlayheadPosition();
+
+      timelineScroll.scrollLeft = (pauseOffset * pixelsPerSecond) - (timelineScroll.clientWidth / 2);
+      if (isPlaying) restartLiveAudio();
+    }
+
+    function togglePlay() {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+
+      if (isPlaying) {
+        stopPlay();
+      } else {
+        if (pauseOffset >= maxProjectDuration && maxProjectDuration > 0) {
+          pauseOffset = 0;
+        }
+        startAudioNodes();
+      }
+    }
+
+    function startAudioNodes() {
+      isPlaying = true;
+      document.getElementById('playIconSvg').innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+      playbackStartTime = audioCtx.currentTime - pauseOffset;
+
+      clips.forEach(clip => {
+        const track = tracks.find(t => t.id === clip.trackId);
+        if (track && track.muted) return;
+
+        const clipOffset = Math.max(0, pauseOffset - clip.startTime);
+        if (clipOffset < clip.duration) {
+          const source = audioCtx.createBufferSource();
+          const gainNode = audioCtx.createGain();
+
+          source.buffer = clip.audioBuffer;
+          
+          const now = audioCtx.currentTime;
+          const startDelay = Math.max(0, clip.startTime - pauseOffset);
+          const playStartTime = now + startDelay;
+          const playEndTime = playStartTime + (clip.duration - clipOffset);
+
+          gainNode.gain.setValueAtTime(clip.volume, playStartTime);
+
+          if (clip.fadeIn > 0 && clipOffset < clip.fadeIn) {
+            gainNode.gain.setValueAtTime(0, playStartTime);
+            gainNode.gain.linearRampToValueAtTime(clip.volume, playStartTime + (clip.fadeIn - clipOffset));
+          }
+
+          if (clip.fadeOut > 0) {
+            const fadeOutStart = playEndTime - clip.fadeOut;
+            gainNode.gain.setValueAtTime(clip.volume, Math.max(playStartTime, fadeOutStart));
+            gainNode.gain.linearRampToValueAtTime(0, playEndTime);
+          }
+
+          source.connect(gainNode);
+          gainNode.connect(audioCtx.destination);
+
+          source.start(playStartTime, clipOffset);
+          activeSources.push(source);
+        }
+      });
+
+      animatePlayhead();
+    }
+
+    function restartLiveAudio() {
+      stopPlay();
+      startAudioNodes();
+    }
+
+    function stopPlay() {
+      isPlaying = false;
+      document.getElementById('playIconSvg').innerHTML = '<path d="M8 5v14l11-7z"/>';
+      activeSources.forEach(s => { try { s.stop(); } catch(e){} });
+      activeSources = [];
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    }
+
+    function animatePlayhead() {
+      if (!isPlaying) return;
+      pauseOffset = audioCtx.currentTime - playbackStartTime;
+
+      if (maxProjectDuration > 0 && pauseOffset >= maxProjectDuration) {
+        pauseOffset = maxProjectDuration;
+        updatePlayheadPosition();
+        stopPlay();
+        return;
+      }
+
+      updatePlayheadPosition();
+      animationFrameId = requestAnimationFrame(animatePlayhead);
+    }
+
+    function splitClipAtPlayhead() {
+      const splitTime = pauseOffset;
+      let newClips = [];
+      let splitPerformed = false;
+
+      clips.forEach(clip => {
+        const isTarget = selectedClipId ? (clip.id === selectedClipId) : true;
+
+        if (isTarget && splitTime > clip.startTime && splitTime < (clip.startTime + clip.duration)) {
+          const cutOffset = splitTime - clip.startTime;
+          
+          const leftBuffer = sliceAudioBuffer(clip.audioBuffer, 0, cutOffset);
+          const rightBuffer = sliceAudioBuffer(clip.audioBuffer, cutOffset, clip.duration);
+
+          const leftClip = { ...clip, id: Date.now() + 1, duration: leftBuffer.duration, audioBuffer: leftBuffer };
+          const rightClip = { 
+            ...clip, 
+            id: Date.now() + 2, 
+            startTime: splitTime, 
+            duration: rightBuffer.duration, 
+            audioBuffer: rightBuffer 
+          };
+
+          newClips.push(leftClip, rightClip);
+          splitPerformed = true;
+        } else {
+          newClips.push(clip);
+        }
+      });
+
+      if (splitPerformed) {
+        clips = newClips;
+        selectedClipId = null;
+        renderClips();
+        updateProjectStats();
+        if (isPlaying) restartLiveAudio();
+      }
+    }
+
+    function sliceAudioBuffer(buffer, startSec, endSec) {
+      const rate = buffer.sampleRate;
+      const startFrame = Math.floor(startSec * rate);
+      const endFrame = Math.floor(endSec * rate);
+      const frameCount = endFrame - startFrame;
+
+      const newBuffer = audioCtx.createBuffer(buffer.numberOfChannels, frameCount, rate);
+      for (let i = 0; i < buffer.numberOfChannels; i++) {
+        const channelData = buffer.getChannelData(i);
+        const newChannelData = newBuffer.getChannelData(i);
+        for (let j = 0; j < frameCount; j++) {
+          newChannelData[j] = channelData[startFrame + j];
+        }
+      }
+      return newBuffer;
+    }
+
+    function openClipModal(clipId) {
+      selectedClipId = clipId;
+      const clip = clips.find(c => c.id === clipId);
+      if (!clip) return;
+
+      document.getElementById('modalClipTitle').innerText = clip.name;
+      document.getElementById('clipVolSlider').value = clip.volume * 100;
+      document.getElementById('clipVolVal').innerText = Math.round(clip.volume * 100) + '%';
+      
+      document.getElementById('clipFadeInSlider').value = clip.fadeIn || 0;
+      document.getElementById('clipFadeInVal').innerText = (clip.fadeIn || 0) + 'с';
+
+      document.getElementById('clipFadeOutSlider').value = clip.fadeOut || 0;
+      document.getElementById('clipFadeOutVal').innerText = (clip.fadeOut || 0) + 'с';
+
+      document.getElementById('clipModal').classList.add('active');
+    }
+
+    function closeClipModal(e) {
+      document.getElementById('clipModal').classList.remove('active');
+      renderClips();
+      if (isPlaying) restartLiveAudio();
+    }
+
+    function updateClipVolume(val) {
+      document.getElementById('clipVolVal').innerText = val + '%';
+      const clip = clips.find(c => c.id === selectedClipId);
+      if (clip) clip.volume = val / 100;
+    }
+
+    function updateClipFadeIn(val) {
+      document.getElementById('clipFadeInVal').innerText = val + 'с';
+      const clip = clips.find(c => c.id === selectedClipId);
+      if (clip) clip.fadeIn = parseFloat(val);
+    }
+
+    function updateClipFadeOut(val) {
+      document.getElementById('clipFadeOutVal').innerText = val + 'с';
+      const clip = clips.find(c => c.id === selectedClipId);
+      if (clip) clip.fadeOut = parseFloat(val);
+    }
+
+    function copyCurrentClip() {
+      const clip = clips.find(c => c.id === selectedClipId);
+      if (clip) {
+        clipboardClip = clip;
+        closeClipModal();
+      }
+    }
+
+    function pasteClipFromClipboard() {
+      if (!clipboardClip) return alert('Сначала скопируйте какой-нибудь фрагмент!');
+
+      const pastedClip = {
+        ...clipboardClip,
+        id: Date.now() + Math.random(),
+        startTime: pauseOffset,
+        trackId: clipboardClip.trackId
+      };
+
+      clips.push(pastedClip);
+      renderClips();
+      updateProjectStats();
+      if (isPlaying) restartLiveAudio();
+    }
+
+    function reverseCurrentClip() {
+      const clip = clips.find(c => c.id === selectedClipId);
+      if (clip) {
+        const buffer = clip.audioBuffer;
+        for (let i = 0; i < buffer.numberOfChannels; i++) {
+          Array.prototype.reverse.call(buffer.getChannelData(i));
+        }
+        closeClipModal();
+      }
+    }
+
+    function deleteCurrentClip() {
+      clips = clips.filter(c => c.id !== selectedClipId);
+      selectedClipId = null;
+      closeClipModal();
+      updateProjectStats();
+    }
+
+    function toggleMuteTrack(trackId) {
+      const track = tracks.find(t => t.id === trackId);
+      if (track) {
+        track.muted = !track.muted;
+        renderTracks();
+        if (isPlaying) restartLiveAudio();
+      }
+    }
+
+    function adjustZoom(factor) {
+      pixelsPerSecond = Math.max(10, Math.min(200, pixelsPerSecond * factor));
+      renderRuler();
+      renderClips();
+      updatePlayheadPosition();
+    }
+
+    function openExportModal() {
+      if (!clips.length) return alert('Проект пуст!');
+      document.getElementById('exportModal').classList.add('active');
+    }
+
+    function closeExportModal(e) {
+      document.getElementById('exportModal').classList.remove('active');
+    }
+
+    async function generateMixdownBuffer() {
+      let maxDuration = 0;
+      clips.forEach(c => {
+        if (c.startTime + c.duration > maxDuration) maxDuration = c.startTime + c.duration;
+      });
+
+      const offlineCtx = new OfflineAudioContext(2, Math.ceil(maxDuration * 44100), 44100);
+
+      clips.forEach(clip => {
+        const track = tracks.find(t => t.id === clip.trackId);
+        if (track && track.muted) return;
+
+        const source = offlineCtx.createBufferSource();
+        const gainNode = offlineCtx.createGain();
+
+        source.buffer = clip.audioBuffer;
+        
+        gainNode.gain.setValueAtTime(clip.volume, clip.startTime);
+        if (clip.fadeIn > 0) {
+          gainNode.gain.setValueAtTime(0, clip.startTime);
+          gainNode.gain.linearRampToValueAtTime(clip.volume, clip.startTime + clip.fadeIn);
+        }
+        if (clip.fadeOut > 0) {
+          const fadeOutStart = clip.startTime + clip.duration - clip.fadeOut;
+          gainNode.gain.setValueAtTime(clip.volume, Math.max(clip.startTime, fadeOutStart));
+          gainNode.gain.linearRampToValueAtTime(0, clip.startTime + clip.duration);
+        }
+
+        source.connect(gainNode);
+        gainNode.connect(offlineCtx.destination);
+
+        source.start(clip.startTime);
+      });
+
+      return await offlineCtx.startRendering();
+    }
+
+    async function confirmExport() {
+      const filename = document.getElementById('exportFilename').value.trim() || 'Fiaba_Track';
+      const format = document.getElementById('exportFormat').value;
+
+      const renderedBuffer = await generateMixdownBuffer();
+      const wavBlob = audioBufferToWav(renderedBuffer);
+
+      const url = URL.createObjectURL(wavBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${filename}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      closeExportModal();
+    }
+
+    async function shareProject() {
+      const filename = document.getElementById('exportFilename').value.trim() || 'Fiaba_Track';
+      const renderedBuffer = await generateMixdownBuffer();
+      const wavBlob = audioBufferToWav(renderedBuffer);
+      const file = new File([wavBlob], `${filename}.wav`, { type: 'audio/wav' });
+
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            title: filename,
+            text: 'Создано в Фябаmp3 Mobile DAW',
+            files: [file]
+          });
+          closeExportModal();
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') return;
+        }
+      }
+
+      const url = URL.createObjectURL(wavBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${filename}.wav`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      closeExportModal();
+      alert('Файл сохранен напрямую в ваши файлы/загрузки!');
+    }
+
+    function audioBufferToWav(buffer) {
+      let numOfChan = buffer.numberOfChannels,
+          length = buffer.length * numOfChan * 2 + 44,
+          out = new DataView(new ArrayBuffer(length)),
+          channels = [], sampleRate = buffer.sampleRate,
+          offset = 0, pos = 0;
+
+      function setUint16(data) { out.setUint16(pos, data, true); pos += 2; }
+      function setUint32(data) { out.setUint32(pos, data, true); pos += 4; }
+
+      setUint32(0x46464952);
+      setUint32(length - 8);
+      setUint32(0x45564157);
+      setUint32(0x20746d66);
+      setUint32(16);
+      setUint16(1);
+      setUint16(numOfChan);
+      setUint32(sampleRate);
+      setUint32(sampleRate * 2 * numOfChan);
+      setUint16(numOfChan * 2);
+      setUint16(16);
+      setUint32(0x61746164);
+      setUint32(length - pos - 4);
+
+      for(let i = 0; i < buffer.numberOfChannels; i++) channels.push(buffer.getChannelData(i));
+
+      while(offset < buffer.length) {
+        for(let i = 0; i < numOfChan; i++) {
+          let sample = Math.max(-1, Math.min(1, channels[i][offset]));
+          sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767)|0;
+          out.setInt16(pos, sample, true);
+          pos += 2;
+        }
+        offset++;
+      }
+      return new Blob([out], { type: "audio/wav" });
+    }
+  </script>
+</body>
+</html>
